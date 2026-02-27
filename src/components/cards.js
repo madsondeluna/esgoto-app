@@ -64,11 +64,11 @@ export function renderCards(container, diseaseDataMap = null) {
       </div>
       <div class="disease-card__stats">
         <div class="disease-card__stat">
-          <span class="disease-card__stat-value">${totalCases > 0 ? totalCases.toLocaleString('pt-BR') : '--'}</span>
-          <span class="disease-card__stat-label">Casos (capitais)</span>
+          <span class="disease-card__stat-value">${totalCases.toLocaleString('pt-BR')}</span>
+          <span class="disease-card__stat-label">Casos totais</span>
         </div>
         <div class="disease-card__stat">
-          <span class="disease-card__stat-value">${validRtCount > 0 ? avgRt.toFixed(2) : '--'}</span>
+          <span class="disease-card__stat-value">${validRtCount > 0 ? avgRt.toFixed(2) : '0.00'}</span>
           <span class="disease-card__stat-label">Rt médio</span>
         </div>
       </div>
