@@ -15,6 +15,8 @@ let geoLayer = null;       // State-level layer
 let currentRegion = 'all';
 let onStateClick = null;
 let currentDisease = 'dengue';
+let currentMapLayer = 'disease';  // 'disease' | 'coletaEsgoto' | 'tratamentoEsgoto'
+let lastCapitalData = [];
 
 // Municipality zoom management
 const MUNICIPIO_ZOOM_THRESHOLD = 6;
@@ -224,9 +226,56 @@ export function setMapDisease(disease) {
     }
 }
 
+// ===== Sanitation color gradient (blue scale) =====
+function getSanitationColor(percent) {
+    // 0% → dark/red, 100% → bright cyan
+    if (percent >= 80) return '#06b6d4'; // cyan-500
+    if (percent >= 60) return '#22d3ee'; // cyan-400
+    if (percent >= 40) return '#67e8f9'; // cyan-300
+    if (percent >= 20) return '#f59e0b'; // amber-500 (low-moderate)
+    return '#ef4444';                    // red-500 (very low)
+}
+
+function getSanitationOpacity(percent) {
+    return 0.35 + (percent / 100) * 0.4; // range: 0.35 – 0.75
+}
+
+// ===== Set Map Layer =====
+export function setMapLayer(layer) {
+    currentMapLayer = layer;
+    updateLegend(layer);
+    if (geoLayer) {
+        loadGeoJSON(lastCapitalData);
+    }
+}
+
+function updateLegend(layer) {
+    const legendEl = document.getElementById('map-legend');
+    if (!legendEl) return;
+
+    if (layer === 'disease') {
+        legendEl.innerHTML = `
+            <div class="legend-item"><span class="legend-color" style="background: var(--alert-green)"></span>Nível 1 — Verde</div>
+            <div class="legend-item"><span class="legend-color" style="background: var(--alert-yellow)"></span>Nível 2 — Atenção</div>
+            <div class="legend-item"><span class="legend-color" style="background: var(--alert-orange)"></span>Nível 3 — Alerta</div>
+            <div class="legend-item"><span class="legend-color" style="background: var(--alert-red)"></span>Nível 4 — Emergência</div>
+        `;
+    } else {
+        const label = layer === 'coletaEsgoto' ? 'Coleta de Esgoto' : 'Tratamento de Esgoto';
+        legendEl.innerHTML = `
+            <div class="legend-item"><span class="legend-color" style="background: #06b6d4"></span>≥ 80% ${label}</div>
+            <div class="legend-item"><span class="legend-color" style="background: #22d3ee"></span>60–79%</div>
+            <div class="legend-item"><span class="legend-color" style="background: #67e8f9"></span>40–59%</div>
+            <div class="legend-item"><span class="legend-color" style="background: #f59e0b"></span>20–39%</div>
+            <div class="legend-item"><span class="legend-color" style="background: #ef4444"></span>< 20%</div>
+        `;
+    }
+}
+
 // ===== Load State-Level GeoJSON =====
 export async function loadGeoJSON(capitalData = []) {
     const loadingEl = document.getElementById('map-loading');
+    lastCapitalData = capitalData;
 
     try {
         const geojson = await fetchBrazilGeoJSON();
@@ -251,8 +300,8 @@ export async function loadGeoJSON(capitalData = []) {
                 const ufId = feature.properties.codarea;
                 const ufAbbr = getUFAbbreviation(Number(ufId));
                 const region = getRegionForUF(ufAbbr);
+                const sanitation = sanitationData[ufAbbr];
 
-                // Determine fill color based on alert level or sewage data
                 let fillColor = '#1e293b';
                 let fillOpacity = 0.6;
 
@@ -260,10 +309,18 @@ export async function loadGeoJSON(capitalData = []) {
                     fillOpacity = 0.15;
                 }
 
-                const capData = diseaseByUF[ufAbbr];
-                if (capData && capData.latest) {
-                    fillColor = getAlertColorHex(capData.latest.nivel);
-                    fillOpacity = currentRegion !== 'all' && region !== currentRegion ? 0.15 : 0.55;
+                if (currentMapLayer === 'disease') {
+                    // Disease alert coloring
+                    const capData = diseaseByUF[ufAbbr];
+                    if (capData && capData.latest) {
+                        fillColor = getAlertColorHex(capData.latest.nivel);
+                        fillOpacity = currentRegion !== 'all' && region !== currentRegion ? 0.15 : 0.55;
+                    }
+                } else if (sanitation) {
+                    // Sanitation layer coloring
+                    const val = sanitation[currentMapLayer] || 0;
+                    fillColor = getSanitationColor(val);
+                    fillOpacity = currentRegion !== 'all' && region !== currentRegion ? 0.15 : getSanitationOpacity(val);
                 }
 
                 // If zoomed in, make states translucent
@@ -305,11 +362,14 @@ export async function loadGeoJSON(capitalData = []) {
 
                 // Sanitation data
                 if (sanitation) {
+                    const isActiveSanitation = currentMapLayer !== 'disease';
+                    const highlightColeta = currentMapLayer === 'coletaEsgoto' ? 'color:var(--accent-primary);font-weight:600' : '';
+                    const highlightTrat = currentMapLayer === 'tratamentoEsgoto' ? 'color:var(--accent-primary);font-weight:600' : '';
                     popupHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.15)">`;
                     popupHTML += `<span class="popup-stat__label" style="display:block;margin-bottom:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="vertical-align:-2px;margin-right:4px"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0L12 2.69z"/></svg>Saneamento (SNIS)</span>`;
                     popupHTML += `<div class="popup-stats">`;
-                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Coleta Esgoto</span><span class="popup-stat__value">${sanitation.coletaEsgoto}%</span></div>`;
-                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Trat. Esgoto</span><span class="popup-stat__value">${sanitation.tratamentoEsgoto}%</span></div>`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label" style="${highlightColeta}">Coleta Esgoto</span><span class="popup-stat__value" style="${highlightColeta}">${sanitation.coletaEsgoto}%</span></div>`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label" style="${highlightTrat}">Trat. Esgoto</span><span class="popup-stat__value" style="${highlightTrat}">${sanitation.tratamentoEsgoto}%</span></div>`;
                     popupHTML += `</div></div>`;
                 }
 

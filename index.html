@@ -88,7 +88,7 @@
 
                 <div class="sidebar__section">
                     <h3 class="sidebar__section-title">Legenda do Mapa</h3>
-                    <div class="map-legend">
+                    <div class="map-legend" id="map-legend">
                         <div class="legend-item"><span class="legend-color"
                                 style="background: var(--alert-green)"></span>Nível 1 — Verde</div>
                         <div class="legend-item"><span class="legend-color"
@@ -97,6 +97,15 @@
                                 style="background: var(--alert-orange)"></span>Nível 3 — Alerta</div>
                         <div class="legend-item"><span class="legend-color"
                                 style="background: var(--alert-red)"></span>Nível 4 — Emergência</div>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Camada do Mapa</h3>
+                    <div class="map-layer-toggles" id="map-layer-toggles">
+                        <button class="layer-btn active" data-layer="disease">Doenças</button>
+                        <button class="layer-btn" data-layer="coletaEsgoto">Coleta de Esgoto</button>
+                        <button class="layer-btn" data-layer="tratamentoEsgoto">Trat. de Esgoto</button>
                     </div>
                 </div>
 
