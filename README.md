@@ -92,7 +92,7 @@ graph LR
 
 ```bash
 # Clone o repositório
-git clone https://github.com/madsondeluna/esgoto-app.git
+git clone https://github.com/madsondeluna/vsb-dashboard.git
 cd esgoto-app
 
 # Instale as dependências
