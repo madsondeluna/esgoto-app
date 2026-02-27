@@ -3,7 +3,7 @@
  * Orchestrates all components and views
  */
 import { fetchNationalOverview, fetchDiseaseData, getSanitationData, getDiseaseInfo, CHART_COLORS } from './services/api.js';
-import { initMap, loadGeoJSON, fitRegion, updateMapColors, setMapDisease } from './components/map.js';
+import { initMap, loadGeoJSON, fitRegion, updateMapColors, setMapDisease, setMapLayer } from './components/map.js';
 import { renderAllCharts, renderMainChart, renderSanitationCorrelation } from './components/charts.js';
 import { initCards, renderCards, updateNationalSummary, setActiveDisease } from './components/cards.js';
 import { initRegionFilters, initTrackerSelectors, initPeriodControls, getPeriod, initSearch, initPathogenTags, initChartToggle } from './components/filters.js';
@@ -265,6 +265,20 @@ async function init() {
     // Region filters
     initRegionFilters((region) => {
         fitRegion(region);
+    });
+
+    // Map layer toggles
+    const layerBtns = document.querySelectorAll('.layer-btn');
+    layerBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Update active styling
+            layerBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Set map layer
+            const layer = e.target.dataset.layer;
+            setMapLayer(layer);
+        });
     });
 
     // Search
