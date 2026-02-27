@@ -123,6 +123,82 @@ export async function fetchNationalOverview(disease = 'dengue') {
     });
 }
 
+// ===== IBGE Municipality GeoJSON =====
+
+export async function fetchStateGeoJSON(ufId) {
+    return cachedFetch(`state-geo-${ufId}`, async () => {
+        const res = await fetch(`https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`);
+        if (!res.ok) throw new Error(`Falha ao carregar malha de municípios (UF ${ufId})`);
+        return res.json();
+    });
+}
+
+// ===== Major cities per UF (geocode list for bulk alerts) =====
+// ~10–15 largest cities per state to avoid excessive API calls
+export const MAJOR_CITIES_BY_UF = {
+    11: [1100205, 1100023, 1100015, 1100122, 1100114, 1100049, 1100304, 1100320, 1100155, 1100189], // RO
+    12: [1200401, 1200104, 1200203, 1200302, 1200500, 1200609, 1200138, 1200179, 1200013, 1200054], // AC
+    13: [1302603, 1302702, 1301902, 1303403, 1301100, 1301209, 1300706, 1302504, 1303536, 1300508], // AM
+    14: [1400100, 1400472, 1400233, 1400159, 1400050, 1400027, 1400282, 1400407, 1400456, 1400300], // RR
+    15: [1501402, 1500800, 1504208, 1505536, 1502301, 1502202, 1505502, 1500602, 1502764, 1501303], // PA
+    16: [1600303, 1600600, 1600154, 1600055, 1600105, 1600204, 1600279, 1600400, 1600212, 1600709], // AP
+    17: [1721000, 1702109, 1716109, 1713205, 1709500, 1718204, 1703826, 1710508, 1718840, 1708205], // TO
+    21: [2111300, 2105302, 2104800, 2100055, 2109106, 2103000, 2101400, 2108403, 2105153, 2112209], // MA
+    22: [2211001, 2211100, 2207702, 2205003, 2201200, 2207108, 2203503, 2207553, 2202109, 2205102], // PI
+    23: [2304400, 2304103, 2307304, 2309706, 2303709, 2305233, 2312908, 2306306, 2300200, 2305100], // CE
+    24: [2408102, 2407104, 2411056, 2401305, 2403251, 2404408, 2408003, 2405306, 2312508, 2406155], // RN
+    25: [2507507, 2504009, 2501104, 2500809, 2503704, 2408508, 2507101, 2502805, 2507200, 2505600], // PB
+    26: [2611606, 2607901, 2604106, 2609600, 2607208, 2610707, 2602902, 2605459, 2606101, 2604007], // PE
+    27: [2704302, 2700300, 2706307, 2704906, 2704708, 2702306, 2701506, 2703403, 2705200, 2702108], // AL
+    28: [2800308, 2802106, 2803500, 2804508, 2802502, 2801504, 2803609, 2800100, 2806701, 2802007], // SE
+    29: [2927408, 2910800, 2919207, 2905701, 2933307, 2918209, 2914802, 2930774, 2924009, 2907202], // BA
+    31: [3106200, 3170206, 3118601, 3136702, 3106705, 3137601, 3157807, 3122306, 3154606, 3131307], // MG
+    32: [3205309, 3205200, 3201308, 3205002, 3202405, 3200607, 3203205, 3205101, 3201209, 3203346], // ES
+    33: [3304557, 3302403, 3303302, 3302858, 3301702, 3301009, 3302007, 3301405, 3304904, 3300456], // RJ
+    35: [3550308, 3518800, 3509502, 3524402, 3548500, 3547809, 3543402, 3552205, 3549805, 3534401], // SP
+    41: [4106902, 4113700, 4105805, 4109401, 4115200, 4104808, 4119905, 4125506, 4103404, 4108304], // PR
+    42: [4205407, 4209102, 4204202, 4202404, 4214805, 4208203, 4200705, 4206504, 4211306, 4205191], // SC
+    43: [4314902, 4303905, 4305108, 4316907, 4306106, 4310801, 4303103, 4313409, 4320008, 4318705], // RS
+    50: [5002704, 5003702, 5002502, 5008305, 5006200, 5007208, 5007109, 5003504, 5004403, 5005707], // MS
+    51: [5103403, 5108402, 5106422, 5107602, 5106224, 5103254, 5102678, 5103700, 5101902, 5107909], // MT
+    52: [5208707, 5201405, 5200050, 5211503, 5206206, 5219753, 5200258, 5209408, 5219712, 5220405], // GO
+    53: [5300108], // DF
+};
+
+// ===== Fetch disease alerts for multiple municipalities =====
+export async function fetchBulkMunicipioAlerts(geocodes, disease = 'dengue') {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+    const dayOfYear = Math.floor((currentDate - startOfYear) / 86400000);
+    const currentEW = Math.min(Math.ceil(dayOfYear / 7), 52);
+    const startEW = Math.max(1, currentEW - 2);
+
+    const results = await Promise.allSettled(
+        geocodes.map(async (geocode) => {
+            try {
+                const data = await fetchDiseaseData(geocode, disease, startEW, currentEW, currentYear, currentYear);
+                const latest = data.length > 0 ? data[data.length - 1] : null;
+                return { geocode, data, latest };
+            } catch {
+                return { geocode, data: [], latest: null };
+            }
+        })
+    );
+
+    const alertMap = {};
+    results
+        .filter(r => r.status === 'fulfilled')
+        .forEach(r => {
+            const val = r.value;
+            if (val.latest) {
+                alertMap[val.geocode] = val.latest;
+            }
+        });
+
+    return alertMap;
+}
+
 // ===== SNIS — Sanitation (Sewage) Data =====
 // We use pre-built data representing sewage coverage by state
 // Source: SNIS 2023 / Atlas Esgotos - ANA

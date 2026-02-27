@@ -1,14 +1,26 @@
 /**
  * VigiSaúde Brasil — Map Component
  * Interactive Leaflet map of Brazil with disease alert overlay and sewage data
+ * Supports municipality-level heatmap on zoom
  */
 import L from 'leaflet';
-import { fetchBrazilGeoJSON, getUFAbbreviation, getSanitationData, getAlertColorHex, getRegionForUF } from '../services/api.js';
+import {
+    fetchBrazilGeoJSON, fetchStateGeoJSON, fetchBulkMunicipioAlerts,
+    getUFAbbreviation, getSanitationData, getAlertColorHex, getRegionForUF,
+    MAJOR_CITIES_BY_UF
+} from '../services/api.js';
 
 let map = null;
-let geoLayer = null;
+let geoLayer = null;       // State-level layer
 let currentRegion = 'all';
 let onStateClick = null;
+let currentDisease = 'dengue';
+
+// Municipality zoom management
+const MUNICIPIO_ZOOM_THRESHOLD = 6;
+const loadedMunicipioLayers = {};  // { ufId: L.geoJSON layer }
+const loadingStates = new Set();   // UF IDs currently being fetched
+const municipioAlertCache = {};    // { ufId: { geocode: alertData } }
 
 const regionBounds = {
     all: [[-33.75, -73.99], [5.27, -34.79]],
@@ -18,6 +30,9 @@ const regionBounds = {
     sul: [[-33.8, -57.7], [-22.5, -48.0]],
     'centro-oeste': [[-24.5, -61.5], [-5.5, -45.5]],
 };
+
+// UF ID to number mapping (from codarea in IBGE GeoJSON)
+const UF_IDS = [11, 12, 13, 14, 15, 16, 17, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32, 33, 35, 41, 42, 43, 50, 51, 52, 53];
 
 export function initMap(containerId, stateClickCallback) {
     onStateClick = stateClickCallback;
@@ -39,9 +54,177 @@ export function initMap(containerId, stateClickCallback) {
         maxZoom: 19,
     }).addTo(map);
 
+    // Listen for zoom changes to manage municipality layers
+    map.on('zoomend', handleZoomChange);
+    map.on('moveend', handleZoomChange);
+
     return map;
 }
 
+// ===== Zoom Handler =====
+function handleZoomChange() {
+    const zoom = map.getZoom();
+
+    if (zoom >= MUNICIPIO_ZOOM_THRESHOLD) {
+        // Find which states are visible in the viewport
+        const bounds = map.getBounds();
+        const visibleUFs = getVisibleUFs(bounds);
+        visibleUFs.forEach(ufId => loadMunicipioLayer(ufId));
+
+        // Fade out state layer when zoomed in
+        if (geoLayer) {
+            geoLayer.setStyle({ fillOpacity: 0.1, weight: 0.5 });
+        }
+    } else {
+        // Remove all municipality layers when zoomed out
+        removeMunicipioLayers();
+
+        // Restore state layer opacity
+        if (geoLayer) {
+            geoLayer.eachLayer(layer => {
+                geoLayer.resetStyle(layer);
+            });
+        }
+    }
+}
+
+// ===== Determine which UF IDs are visible in viewport =====
+function getVisibleUFs(bounds) {
+    if (!geoLayer) return [];
+
+    const visible = [];
+    geoLayer.eachLayer(layer => {
+        if (layer.feature && layer.getBounds) {
+            try {
+                const layerBounds = layer.getBounds();
+                if (bounds.intersects(layerBounds)) {
+                    const ufId = Number(layer.feature.properties.codarea);
+                    if (UF_IDS.includes(ufId)) {
+                        visible.push(ufId);
+                    }
+                }
+            } catch { /* skip */ }
+        }
+    });
+    return visible;
+}
+
+// ===== Load Municipality Layer for a State =====
+async function loadMunicipioLayer(ufId) {
+    // Skip if already loaded or currently loading
+    if (loadedMunicipioLayers[ufId] || loadingStates.has(ufId)) return;
+
+    // Check if this UF has major cities data
+    if (!MAJOR_CITIES_BY_UF[ufId]) return;
+
+    loadingStates.add(ufId);
+
+    try {
+        // Fetch municipality GeoJSON and disease alerts in parallel
+        const [geojson, alertMap] = await Promise.all([
+            fetchStateGeoJSON(ufId),
+            fetchBulkMunicipioAlerts(MAJOR_CITIES_BY_UF[ufId], currentDisease),
+        ]);
+
+        municipioAlertCache[ufId] = alertMap;
+
+        // Create municipality layer
+        const municipioLayer = L.geoJSON(geojson, {
+            style: (feature) => {
+                const geocode = Number(feature.properties.codarea);
+                const alert = alertMap[geocode];
+
+                let fillColor = 'rgba(30, 41, 59, 0.4)';
+                let fillOpacity = 0.25;
+
+                if (alert) {
+                    fillColor = getAlertColorHex(alert.nivel);
+                    fillOpacity = 0.6;
+                }
+
+                return {
+                    fillColor,
+                    fillOpacity,
+                    weight: 0.8,
+                    color: 'rgba(148, 163, 184, 0.25)',
+                    dashArray: '',
+                };
+            },
+            onEachFeature: (feature, layer) => {
+                const geocode = Number(feature.properties.codarea);
+                const alert = alertMap[geocode];
+
+                if (alert) {
+                    const alertInfo = { 1: 'Verde', 2: 'Atenção', 3: 'Alerta', 4: 'Emergência' };
+                    const alertClass = { 1: 'badge--green', 2: 'badge--yellow', 3: 'badge--orange', 4: 'badge--red' };
+
+                    let popupHTML = `<div class="popup-content">`;
+                    popupHTML += `<h4>${alert.municipio_nome || `Município ${geocode}`}</h4>`;
+                    popupHTML += `<div class="popup-stats">`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Casos (SE ${alert.SE % 100})</span><span class="popup-stat__value">${(alert.casos || 0).toLocaleString('pt-BR')}</span></div>`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Rt</span><span class="popup-stat__value">${alert.Rt ? alert.Rt.toFixed(2) : '--'}</span></div>`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Inc/100k</span><span class="popup-stat__value">${alert.p_inc100k ? alert.p_inc100k.toFixed(1) : '--'}</span></div>`;
+                    popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Acum. Ano</span><span class="popup-stat__value">${(alert.notif_accum_year || 0).toLocaleString('pt-BR')}</span></div>`;
+                    popupHTML += `</div>`;
+                    popupHTML += `<span class="popup-alert-badge badge ${alertClass[alert.nivel] || 'badge--green'}">${alertInfo[alert.nivel] || 'Verde'}</span>`;
+                    popupHTML += `</div>`;
+                    layer.bindPopup(popupHTML);
+                }
+
+                // Hover effects
+                layer.on('mouseover', function () {
+                    this.setStyle({
+                        weight: 2,
+                        color: '#38bdf8',
+                        fillOpacity: alert ? 0.8 : 0.35,
+                    });
+                    this.bringToFront();
+                });
+
+                layer.on('mouseout', function () {
+                    municipioLayer.resetStyle(this);
+                });
+            },
+        });
+
+        municipioLayer.addTo(map);
+        loadedMunicipioLayers[ufId] = municipioLayer;
+
+    } catch (err) {
+        console.error(`Erro ao carregar municípios da UF ${ufId}:`, err);
+    } finally {
+        loadingStates.delete(ufId);
+    }
+}
+
+// ===== Remove all municipality layers =====
+function removeMunicipioLayers() {
+    for (const ufId of Object.keys(loadedMunicipioLayers)) {
+        if (loadedMunicipioLayers[ufId]) {
+            map.removeLayer(loadedMunicipioLayers[ufId]);
+            delete loadedMunicipioLayers[ufId];
+        }
+    }
+}
+
+// ===== Update disease for municipality layers =====
+export function setMapDisease(disease) {
+    currentDisease = disease;
+    // Clear cached municipality data so it reloads with new disease
+    for (const ufId of Object.keys(loadedMunicipioLayers)) {
+        if (loadedMunicipioLayers[ufId]) {
+            map.removeLayer(loadedMunicipioLayers[ufId]);
+            delete loadedMunicipioLayers[ufId];
+        }
+        delete municipioAlertCache[ufId];
+    }
+    // Reload if zoomed in
+    if (map && map.getZoom() >= MUNICIPIO_ZOOM_THRESHOLD) {
+        handleZoomChange();
+    }
+}
+
+// ===== Load State-Level GeoJSON =====
 export async function loadGeoJSON(capitalData = []) {
     const loadingEl = document.getElementById('map-loading');
 
@@ -81,6 +264,11 @@ export async function loadGeoJSON(capitalData = []) {
                 if (capData && capData.latest) {
                     fillColor = getAlertColorHex(capData.latest.nivel);
                     fillOpacity = currentRegion !== 'all' && region !== currentRegion ? 0.15 : 0.55;
+                }
+
+                // If zoomed in, make states translucent
+                if (map.getZoom() >= MUNICIPIO_ZOOM_THRESHOLD) {
+                    fillOpacity = 0.1;
                 }
 
                 return {
