@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VigiSaúde Brasil — Dashboard de Vigilância Epidemiológica</title>
+    <meta name="description"
+        content="Dashboard interativo de monitoramento de doenças infecciosas no Brasil. Dados em tempo real de Dengue, Chikungunya e Zika via APIs públicas." />
+    <meta name="theme-color" content="#0a0e1a" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/src/styles/index.css" />
+</head>
+
+<body>
+    <!-- Vertical Icon Nav -->
+    <nav id="icon-nav" class="icon-nav">
+        <div class="icon-nav__logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" />
+                <path d="M16 6 C10 12, 10 20, 16 26 C22 20, 22 12, 16 6Z" fill="currentColor" opacity="0.3" />
+                <circle cx="16" cy="16" r="3" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" opacity="0.6" />
+                <circle cx="20" cy="20" r="1.5" fill="currentColor" opacity="0.6" />
+            </svg>
+        </div>
+        <button class="icon-nav__btn active" data-view="map" title="Mapa Nacional" id="nav-map">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                <circle cx="12" cy="9" r="2.5" />
+            </svg>
+        </button>
+        <button class="icon-nav__btn" data-view="tracker" title="Rastreador de Doenças" id="nav-tracker">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+        </button>
+        <button class="icon-nav__btn" data-view="info" title="Informações" id="nav-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="app">
+
+        <!-- ===== MAP VIEW ===== -->
+        <section id="view-map" class="view view--active">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar-map">
+                <header class="sidebar__header">
+                    <h1 class="sidebar__title">VigiSaúde <span class="highlight">Brasil</span></h1>
+                    <p class="sidebar__subtitle">Vigilância Epidemiológica em Tempo Real</p>
+                </header>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Doenças Monitoradas</h3>
+                    <div id="disease-cards" class="disease-cards">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Resumo Nacional</h3>
+                    <div id="national-summary" class="national-summary">
+                        <div class="summary-stat">
+                            <span class="summary-stat__value" id="total-cases">--</span>
+                            <span class="summary-stat__label">Casos totais (2025)</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-stat__value" id="total-cities">--</span>
+                            <span class="summary-stat__label">Municípios em alerta</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-stat__value" id="avg-rt">--</span>
+                            <span class="summary-stat__label">Rt médio nacional</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Legenda do Mapa</h3>
+                    <div class="map-legend">
+                        <div class="legend-item"><span class="legend-color"
+                                style="background: var(--alert-green)"></span>Nível 1 — Verde</div>
+                        <div class="legend-item"><span class="legend-color"
+                                style="background: var(--alert-yellow)"></span>Nível 2 — Atenção</div>
+                        <div class="legend-item"><span class="legend-color"
+                                style="background: var(--alert-orange)"></span>Nível 3 — Alerta</div>
+                        <div class="legend-item"><span class="legend-color"
+                                style="background: var(--alert-red)"></span>Nível 4 — Emergência</div>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Filtro Regional</h3>
+                    <div class="region-filters" id="region-filters">
+                        <button class="region-btn active" data-region="all">Nacional</button>
+                        <button class="region-btn" data-region="norte">Norte</button>
+                        <button class="region-btn" data-region="nordeste">Nordeste</button>
+                        <button class="region-btn" data-region="sudeste">Sudeste</button>
+                        <button class="region-btn" data-region="sul">Sul</button>
+                        <button class="region-btn" data-region="centro-oeste">Centro-Oeste</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map Area -->
+            <main class="main-content">
+                <div class="main-content__header">
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" id="location-search" class="search-input" placeholder="Buscar município..."
+                            autocomplete="off" />
+                        <div id="search-results" class="search-results hidden"></div>
+                    </div>
+                    <div class="main-header-actions">
+                        <span class="last-update" id="last-update">Atualizado: --</span>
+                    </div>
+                </div>
+                <div id="map-container" class="map-container">
+                    <div id="map" class="map"></div>
+                    <div id="map-loading" class="map-loading">
+                        <div class="loader"></div>
+                        <span>Carregando mapa...</span>
+                    </div>
+                </div>
+            </main>
+        </section>
+
+        <!-- ===== TRACKER VIEW ===== -->
+        <section id="view-tracker" class="view">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar-tracker">
+                <header class="sidebar__header">
+                    <h1 class="sidebar__title">Rastreador</h1>
+                    <p class="sidebar__subtitle">Análise detalhada por localidade</p>
+                </header>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Categoria</h3>
+                    <div class="category-tabs" id="category-tabs">
+                        <button class="category-tab active" data-category="arboviroses">Arboviroses</button>
+                        <button class="category-tab" data-category="respiratorias">Respiratórias</button>
+                        <button class="category-tab" data-category="outras">Outras</button>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Patógeno</h3>
+                    <div class="pathogen-tags" id="pathogen-tags">
+                        <button class="pathogen-tag active" data-disease="dengue">Dengue</button>
+                        <button class="pathogen-tag" data-disease="chikungunya">Chikungunya</button>
+                        <button class="pathogen-tag" data-disease="zika">Zika</button>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Tipo</h3>
+                    <p class="sidebar__type-display" id="tracker-disease-type">Dengue</p>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Localidade(s) <span class="loc-count" id="loc-count">0
+                            selecionadas</span></h3>
+                    <div class="location-selector">
+                        <div class="select-wrapper">
+                            <select id="tracker-state" class="custom-select">
+                                <option value="">Selecione um estado</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper">
+                            <select id="tracker-city" class="custom-select" disabled>
+                                <option value="">Selecione um município</option>
+                            </select>
+                        </div>
+                        <button id="add-location-btn" class="btn btn--primary btn--sm" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                                height="16">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Adicionar
+                        </button>
+                    </div>
+                    <div id="selected-locations" class="selected-locations"></div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Exibição do Gráfico</h3>
+                    <div class="chart-display-options">
+                        <label class="toggle-option">
+                            <input type="checkbox" id="show-national" checked />
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Níveis Nacionais</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" id="show-rt-line" checked />
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Linha Rt = 1</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sidebar__section">
+                    <h3 class="sidebar__section-title">Período</h3>
+                    <div class="period-controls">
+                        <div class="period-row">
+                            <label>Início</label>
+                            <div class="period-inputs">
+                                <select id="ew-start" class="custom-select custom-select--sm"></select>
+                                <select id="ey-start" class="custom-select custom-select--sm"></select>
+                            </div>
+                        </div>
+                        <div class="period-row">
+                            <label>Fim</label>
+                            <div class="period-inputs">
+                                <select id="ew-end" class="custom-select custom-select--sm"></select>
+                                <select id="ey-end" class="custom-select custom-select--sm"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Charts Area -->
+            <main class="main-content">
+                <div class="main-content__header">
+                    <div class="chart-title-area">
+                        <h2 id="chart-main-title" class="chart-title">Dengue — Selecione uma localidade</h2>
+                        <div class="chart-view-toggle">
+                            <button class="chart-toggle-btn active" data-chart="line" id="btn-line-chart">Linha</button>
+                            <button class="chart-toggle-btn" data-chart="bar" id="btn-bar-chart">Barras</button>
+                            <button class="chart-toggle-btn" data-chart="heatmap" id="btn-heatmap">Heatmap</button>
+                        </div>
+                    </div>
+                    <div class="main-header-actions">
+                        <button class="btn btn--outline btn--sm" id="btn-share">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                                height="16">
+                                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                                <polyline points="16 6 12 2 8 6" />
+                                <line x1="12" y1="2" x2="12" y2="15" />
+                            </svg>
+                            Compartilhar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="charts-area">
+                    <!-- Main Chart -->
+                    <div class="chart-panel chart-panel--main" id="main-chart-panel">
+                        <div class="chart-panel__empty" id="chart-empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64"
+                                height="64">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                            </svg>
+                            <h3>Selecione uma localidade</h3>
+                            <p>Escolha um estado e município na barra lateral para visualizar os dados epidemiológicos.
+                            </p>
+                        </div>
+                        <canvas id="main-chart" class="hidden"></canvas>
+                    </div>
+
+                    <!-- Secondary Charts Grid -->
+                    <div class="charts-grid" id="charts-grid">
+                        <div class="chart-panel chart-panel--sm">
+                            <h4 class="chart-panel__title">Taxa de Reprodução (Rt)</h4>
+                            <canvas id="rt-chart"></canvas>
+                        </div>
+                        <div class="chart-panel chart-panel--sm">
+                            <h4 class="chart-panel__title">Incidência por 100 mil hab.</h4>
+                            <canvas id="incidence-chart"></canvas>
+                        </div>
+                        <div class="chart-panel chart-panel--sm">
+                            <h4 class="chart-panel__title">Condições Climáticas</h4>
+                            <canvas id="climate-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </section>
+
+        <!-- ===== INFO VIEW ===== -->
+        <section id="view-info" class="view">
+            <div class="info-page">
+                <div class="info-hero">
+                    <h1>Sobre o <span class="highlight">VigiSaúde Brasil</span></h1>
+                    <p>Dashboard de vigilância epidemiológica utilizando dados públicos abertos do governo federal
+                        brasileiro.</p>
+                </div>
+                <div class="info-content">
+                    <div class="info-card">
+                        <h3>🦟 Doenças Monitoradas</h3>
+                        <p>Monitoramos <strong>Dengue</strong>, <strong>Chikungunya</strong> e <strong>Zika</strong> em
+                            todos os 5.570 municípios brasileiros, utilizando dados da API InfoDengue (Fiocruz).</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>📊 Fontes de Dados</h3>
+                        <ul>
+                            <li><strong>InfoDengue API</strong> — Casos, Rt, incidência, alertas por semana
+                                epidemiológica</li>
+                            <li><strong>IBGE Localidades</strong> — Estados e municípios</li>
+                            <li><strong>IBGE Malhas</strong> — GeoJSON para mapas</li>
+                        </ul>
+                    </div>
+                    <div class="info-card">
+                        <h3>🔬 Metodologia</h3>
+                        <p>Os dados são coletados por semana epidemiológica (SE) e incluem estimativas de casos, taxa de
+                            reprodução (Rt), incidência por 100 mil habitantes e dados climáticos como temperatura e
+                            umidade.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>⚠️ Níveis de Alerta</h3>
+                        <ul>
+                            <li><span class="badge badge--green">Nível 1</span> Verde — Situação favorável</li>
+                            <li><span class="badge badge--yellow">Nível 2</span> Atenção — Monitorar situação</li>
+                            <li><span class="badge badge--orange">Nível 3</span> Alerta — Ação necessária</li>
+                            <li><span class="badge badge--red">Nível 4</span> Emergência — Resposta imediata</li>
+                        </ul>
+                    </div>
+                    <div class="info-card">
+                        <h3>🚰 Relação Esgoto × Doenças</h3>
+                        <p>Dados do <strong>SNIS (Sistema Nacional de Informações sobre Saneamento)</strong> são
+                            cruzados com a incidência de arboviroses para analisar a correlação entre cobertura de
+                            esgoto e ocorrência de doenças transmitidas por mosquitos.</p>
+                        <p style="margin-top:8px;font-size:0.75rem;color:var(--text-tertiary)">Fonte: SNIS/SINISA 2023 ·
+                            Atlas Esgotos (ANA)</p>
+                    </div>
+                    <div class="info-card" style="grid-column: 1 / -1;">
+                        <h3>📈 Correlação: Cobertura de Esgoto vs. Incidência de Dengue</h3>
+                        <p style="margin-bottom:16px;font-size:0.85rem;color:var(--text-secondary)">Cada ponto
+                            representa uma capital brasileira. Eixo X = % de coleta de esgoto (SNIS). Eixo Y =
+                            incidência por 100 mil hab. (InfoDengue).</p>
+                        <div style="height:320px;position:relative;">
+                            <canvas id="sanitation-correlation"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
