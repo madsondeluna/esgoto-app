@@ -52,14 +52,35 @@ function initNavigation() {
 // ===== Load National Data for Map View =====
 async function loadNationalData(disease = 'dengue') {
     try {
+        // Fetch data for the active disease (for map, charts, summary)
         const data = await fetchNationalOverview(disease);
         state.nationalData[disease] = data;
 
-        // Update disease cards
-        const cardsContainer = document.getElementById('disease-cards');
-        renderCards(cardsContainer, data);
+        // Also fetch the other two diseases in background for cards
+        const allDiseases = ['dengue', 'chikungunya', 'zika'];
+        const otherDiseases = allDiseases.filter(d => d !== disease);
+        const otherResults = await Promise.allSettled(
+            otherDiseases.map(async d => {
+                if (state.nationalData[d]) return { disease: d, data: state.nationalData[d] };
+                const result = await fetchNationalOverview(d);
+                state.nationalData[d] = result;
+                return { disease: d, data: result };
+            })
+        );
 
-        // Update national summary
+        // Build diseaseDataMap for cards
+        const diseaseDataMap = { [disease]: data };
+        otherResults.forEach(r => {
+            if (r.status === 'fulfilled') {
+                diseaseDataMap[r.value.disease] = r.value.data;
+            }
+        });
+
+        // Update disease cards with per-disease data
+        const cardsContainer = document.getElementById('disease-cards');
+        renderCards(cardsContainer, diseaseDataMap);
+
+        // Update national summary (active disease)
         updateNationalSummary(data);
 
         // Update map colors

@@ -12,13 +12,23 @@ export function initCards(container, callback) {
     renderCards(container);
 }
 
-export function renderCards(container, nationalData = null) {
+/**
+ * Render disease cards.
+ * @param {HTMLElement} container
+ * @param {Object|null} diseaseDataMap  –  { dengue: [...], chikungunya: [...], zika: [...] }
+ */
+export function renderCards(container, diseaseDataMap = null) {
     const diseases = ['dengue', 'chikungunya', 'zika'];
     container.innerHTML = '';
 
     diseases.forEach(disease => {
         const info = getDiseaseInfo(disease);
         const isActive = disease === activeDisease;
+
+        // Use per-disease data if available
+        const nationalData = diseaseDataMap && diseaseDataMap[disease]
+            ? diseaseDataMap[disease]
+            : null;
 
         // Aggregate data from national overview
         let totalCases = 0;
@@ -67,7 +77,7 @@ export function renderCards(container, nationalData = null) {
         card.addEventListener('click', () => {
             activeDisease = disease;
             if (onDiseaseChange) onDiseaseChange(disease);
-            renderCards(container, nationalData);
+            renderCards(container, diseaseDataMap);
         });
 
         container.appendChild(card);
