@@ -208,9 +208,9 @@ export function getAlertColorHex(nivel) {
 // ===== Disease display info =====
 export function getDiseaseInfo(disease) {
     const info = {
-        dengue: { name: 'Dengue', icon: '🦟', color: 'var(--color-dengue)', colorHex: '#f59e0b' },
-        chikungunya: { name: 'Chikungunya', icon: '🦠', color: 'var(--color-chikungunya)', colorHex: '#ec4899' },
-        zika: { name: 'Zika', icon: '🧬', color: 'var(--color-zika)', colorHex: '#8b5cf6' },
+        dengue: { name: 'Dengue', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>', color: 'var(--color-dengue)', colorHex: '#f59e0b' },
+        chikungunya: { name: 'Chikungunya', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/><path d="M12 7V2M12 22v-5M17 12h5M2 12h5"/></svg>', color: 'var(--color-chikungunya)', colorHex: '#ec4899' },
+        zika: { name: 'Zika', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', color: 'var(--color-zika)', colorHex: '#8b5cf6' },
     };
     return info[disease] || info.dengue;
 }

@@ -230,7 +230,7 @@ function initMapSearchToTracker(geocode, name) {
 
 // ===== App Init =====
 async function init() {
-    console.log('🦟 VigiSaúde Brasil — Inicializando...');
+    console.log('VigiSaude Brasil — Inicializando...');
 
     // Navigation
     initNavigation();

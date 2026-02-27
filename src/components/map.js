@@ -118,7 +118,7 @@ export async function loadGeoJSON(capitalData = []) {
                 // Sanitation data
                 if (sanitation) {
                     popupHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.15)">`;
-                    popupHTML += `<span class="popup-stat__label" style="display:block;margin-bottom:4px">🚰 Saneamento (SNIS)</span>`;
+                    popupHTML += `<span class="popup-stat__label" style="display:block;margin-bottom:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="vertical-align:-2px;margin-right:4px"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0L12 2.69z"/></svg>Saneamento (SNIS)</span>`;
                     popupHTML += `<div class="popup-stats">`;
                     popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Coleta Esgoto</span><span class="popup-stat__value">${sanitation.coletaEsgoto}%</span></div>`;
                     popupHTML += `<div class="popup-stat"><span class="popup-stat__label">Trat. Esgoto</span><span class="popup-stat__value">${sanitation.tratamentoEsgoto}%</span></div>`;

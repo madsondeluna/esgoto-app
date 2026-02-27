@@ -99,7 +99,9 @@
 }
 
 /* ===== Reset & Base ===== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -126,13 +128,16 @@ body {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--surface-3);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
@@ -168,8 +173,15 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.3)); }
-  50% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.6)); }
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.6));
+  }
 }
 
 .icon-nav__btn {
@@ -622,8 +634,15 @@ body {
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .selected-location__color {
@@ -703,11 +722,11 @@ body {
   transition: var(--transition-fast);
 }
 
-.toggle-option input:checked + .toggle-slider {
+.toggle-option input:checked+.toggle-slider {
   background: var(--accent-primary);
 }
 
-.toggle-option input:checked + .toggle-slider::after {
+.toggle-option input:checked+.toggle-slider::after {
   transform: translateX(16px);
   background: white;
 }
@@ -829,7 +848,9 @@ body {
   box-shadow: var(--glass-shadow);
 }
 
-.search-results.hidden { display: none; }
+.search-results.hidden {
+  display: none;
+}
 
 .search-result-item {
   padding: 10px 14px;
@@ -839,7 +860,9 @@ body {
   font-size: var(--text-sm);
 }
 
-.search-result-item:last-child { border-bottom: none; }
+.search-result-item:last-child {
+  border-bottom: none;
+}
 
 .search-result-item:hover {
   background: var(--bg-hover);
@@ -937,7 +960,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Chart Title Area ===== */
@@ -1033,7 +1058,9 @@ body {
   padding: var(--space-2xl);
 }
 
-.chart-panel__empty.hidden { display: none; }
+.chart-panel__empty.hidden {
+  display: none;
+}
 
 .chart-panel__empty h3 {
   font-size: var(--text-lg);
@@ -1264,28 +1291,63 @@ body {
   border-radius: 20px;
 }
 
+/* ===== SVG Icons ===== */
+.disease-icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.info-icon {
+  display: inline-block;
+  vertical-align: -4px;
+  margin-right: 6px;
+  color: var(--accent-primary);
+}
+
 /* ===== Utility ===== */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* ===== Animations ===== */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-fade { animation: fade-in 0.5s ease-out; }
-.animate-slide { animation: slide-up 0.4s ease-out; }
+.animate-fade {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide {
+  animation: slide-up 0.4s ease-out;
+}
 
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .info-content {
     grid-template-columns: 1fr;
   }
@@ -1296,6 +1358,7 @@ body {
     --sidebar-width: 100%;
     --icon-nav-width: 0px;
   }
+
   .icon-nav {
     bottom: 0;
     top: auto;
@@ -1308,7 +1371,11 @@ body {
     border-right: none;
     border-top: 1px solid var(--border-subtle);
   }
-  .icon-nav__logo { display: none; }
+
+  .icon-nav__logo {
+    display: none;
+  }
+
   .icon-nav__btn.active::before {
     left: 50%;
     top: -8px;
@@ -1317,9 +1384,11 @@ body {
     height: 3px;
     border-radius: 3px 3px 0 0;
   }
+
   .view--active {
     flex-direction: column;
   }
+
   .sidebar {
     width: 100%;
     height: auto;
@@ -1327,9 +1396,11 @@ body {
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
   }
+
   .charts-grid {
     grid-template-columns: 1fr;
   }
+
   .national-summary {
     grid-template-columns: 1fr;
   }
