@@ -1080,15 +1080,18 @@ body {
 }
 
 .chart-panel--main {
-  min-height: 360px;
+  flex: 1;
+  min-height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-md) var(--space-xl);
 }
 
 .chart-panel--main canvas {
   width: 100% !important;
-  height: 340px !important;
+  height: 100% !important;
+  max-height: calc(100vh - 200px);
 }
 
 .chart-panel__empty {

@@ -199,21 +199,6 @@
                     <div id="selected-locations" class="selected-locations"></div>
                 </div>
 
-                <div class="sidebar__section">
-                    <h3 class="sidebar__section-title">Exibição do Gráfico</h3>
-                    <div class="chart-display-options">
-                        <label class="toggle-option">
-                            <input type="checkbox" id="show-national" checked />
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label">Níveis Nacionais</span>
-                        </label>
-                        <label class="toggle-option">
-                            <input type="checkbox" id="show-rt-line" checked />
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label">Linha Rt = 1</span>
-                        </label>
-                    </div>
-                </div>
 
                 <div class="sidebar__section">
                     <h3 class="sidebar__section-title">Período</h3>
@@ -241,11 +226,6 @@
                 <div class="main-content__header">
                     <div class="chart-title-area">
                         <h2 id="chart-main-title" class="chart-title">Dengue — Selecione uma localidade</h2>
-                        <div class="chart-view-toggle">
-                            <button class="chart-toggle-btn active" data-chart="line" id="btn-line-chart">Linha</button>
-                            <button class="chart-toggle-btn" data-chart="bar" id="btn-bar-chart">Barras</button>
-                            <button class="chart-toggle-btn" data-chart="heatmap" id="btn-heatmap">Heatmap</button>
-                        </div>
                     </div>
                     <div class="main-header-actions">
                         <button class="btn btn--outline btn--sm" id="btn-share">
@@ -275,21 +255,7 @@
                         <canvas id="main-chart" class="hidden"></canvas>
                     </div>
 
-                    <!-- Secondary Charts Grid -->
-                    <div class="charts-grid" id="charts-grid">
-                        <div class="chart-panel chart-panel--sm">
-                            <h4 class="chart-panel__title">Taxa de Reprodução (Rt)</h4>
-                            <canvas id="rt-chart"></canvas>
-                        </div>
-                        <div class="chart-panel chart-panel--sm">
-                            <h4 class="chart-panel__title">Incidência por 100 mil hab.</h4>
-                            <canvas id="incidence-chart"></canvas>
-                        </div>
-                        <div class="chart-panel chart-panel--sm">
-                            <h4 class="chart-panel__title">Condições Climáticas</h4>
-                            <canvas id="climate-chart"></canvas>
-                        </div>
-                    </div>
+
                 </div>
             </main>
         </section>
