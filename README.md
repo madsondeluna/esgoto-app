@@ -10,15 +10,13 @@ O objetivo é visualizar a relação entre a cobertura de coleta e tratamento de
 
 ### Funcionalidades
 
-- **Mapa Interativo** - Mapa do Brasil colorido por nível de alerta epidemiológico, com dados de saneamento nos popups
-- **Rastreador de Doenças** - Gráficos de séries temporais para qualquer município brasileiro
-- **3 Patógenos** - Dengue, Chikungunya e Zika (via InfoDengue)
-- **Dados de Esgoto** - Cobertura de coleta e tratamento de esgoto por estado (SNIS)
-- **Correlação Esgoto x Doenças** - Gráfico de dispersão mostrando a relação entre saneamento e incidência
-- **Taxa Rt** - Monitoramento da taxa de reprodução com linha de referência Rt=1
-- **Dados Climáticos** - Temperatura e umidade associados à transmissão
-- **Busca de Municípios** - Pesquisa entre 5.570+ municípios do IBGE
-- **Dark Mode** - Interface premium com glassmorphism
+- **Mapa Interativo (Múltiplas Camadas)** - Alterne entre mapas de calor para alertas de doenças ou índices de infraestrutura (Coleta e Tratamento de Esgoto).
+- **Rastreador de Doenças (Correlação Unificada)** - Gráfico centralizado que cruza Casos, Umidade, Temperatura e Metas de Saneamento por mês.
+- **Comparação de Localidades** - Adicione e compare múltiplas cidades e estados simultaneamente no mesmo gráfico.
+- **3 Patógenos** - Dengue, Chikungunya e Zika (via InfoDengue).
+- **Dados de Esgoto Integrados** - Cobertura de coleta e tratamento de esgoto por estado (SNIS) visível nos popups do mapa e no rastreador.
+- **Busca de Municípios** - Pesquisa entre 5.570+ municípios do IBGE.
+- **Dark Mode** - Interface com glassmorphism.
 
 ---
 
