@@ -6,7 +6,7 @@ import { fetchNationalOverview, fetchDiseaseData, getSanitationData, getDiseaseI
 import { initMap, loadGeoJSON, fitRegion, updateMapColors } from './components/map.js';
 import { renderAllCharts, renderMainChart, renderSanitationCorrelation } from './components/charts.js';
 import { initCards, renderCards, updateNationalSummary, setActiveDisease } from './components/cards.js';
-import { initRegionFilters, initTrackerSelectors, initPeriodControls, getPeriod, initSearch, initPathogenTags, initCategoryTabs, initChartToggle } from './components/filters.js';
+import { initRegionFilters, initTrackerSelectors, initPeriodControls, getPeriod, initSearch, initPathogenTags, initChartToggle } from './components/filters.js';
 
 // ===== App State =====
 const state = {
@@ -265,7 +265,6 @@ async function init() {
         updateChartTitle();
         await reloadTrackerData();
     });
-    initCategoryTabs();
     initChartToggle((chartType) => {
         // Could switch chart type; for now line chart is default
         console.log(`Tipo de gráfico: ${chartType}`);
