@@ -50,8 +50,8 @@ export async function fetchBrazilGeoJSON() {
 export async function fetchDiseaseData(geocode, disease = 'dengue', ewStart = 1, ewEnd = 52, eyStart = 2025, eyEnd = 2025) {
     const key = cacheKey('disease', geocode, disease, ewStart, ewEnd, eyStart, eyEnd);
     return cachedFetch(key, async () => {
-        // Use proxy in dev to avoid CORS, direct URL in production
-        const baseUrl = import.meta.env.DEV ? '/api/infodengue' : 'https://info.dengue.mat.br/api';
+        // Always use relative proxy path — handled by Vite in dev, Express in production
+        const baseUrl = '/api/infodengue';
         const url = `${baseUrl}/alertcity?geocode=${geocode}&disease=${disease}&format=json&ew_start=${ewStart}&ew_end=${ewEnd}&ey_start=${eyStart}&ey_end=${eyEnd}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Falha ao carregar dados de ${disease}`);
