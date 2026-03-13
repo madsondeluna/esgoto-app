@@ -70,7 +70,7 @@ export function initMap(containerId, stateClickCallback) {
         preferCanvas: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://carto.com/">CARTO</a> | Dados: InfoDengue, IBGE, SNIS',
         subdomains: 'abcd',
         maxZoom: 19,
@@ -153,7 +153,7 @@ async function loadMunicipioLayer(ufId) {
                     fillOpacity = 0.6;
                 }
 
-                return { fillColor, fillOpacity, weight: 0.8, color: 'rgba(148, 163, 184, 0.25)', dashArray: '' };
+                return { fillColor, fillOpacity, weight: 0.8, color: 'rgba(0, 0, 0, 0.15)', dashArray: '' };
             },
             onEachFeature: (feature, layer) => {
                 const geocode = Number(feature.properties.codarea);
@@ -177,7 +177,7 @@ async function loadMunicipioLayer(ufId) {
                 }
 
                 layer.on('mouseover', function () {
-                    this.setStyle({ weight: 2, color: '#38bdf8', fillOpacity: alert ? 0.8 : 0.35 });
+                    this.setStyle({ weight: 2, color: '#6baed6', fillOpacity: alert ? 0.78 : 0.35 });
                     this.bringToFront();
                 });
 
@@ -222,11 +222,11 @@ export function setMapDisease(disease) {
 
 // ===== Sanitation color gradient =====
 function getSanitationColor(percent) {
-    if (percent >= 80) return '#06b6d4';
-    if (percent >= 60) return '#22d3ee';
-    if (percent >= 40) return '#67e8f9';
-    if (percent >= 20) return '#f59e0b';
-    return '#ef4444';
+    if (percent >= 80) return '#5ab0d8';
+    if (percent >= 60) return '#74c496';
+    if (percent >= 40) return '#a8c860';
+    if (percent >= 20) return '#c89828';
+    return '#c05858';
 }
 
 function getSanitationOpacity(percent) {
@@ -235,11 +235,11 @@ function getSanitationOpacity(percent) {
 
 // ===== HEATMAP MULTI-PATÓGENO (SVG overlay com blur) =====
 
-// Disease color definitions for SVG heatmap
+// Disease color definitions for SVG heatmap (light map, multiply blend)
 const HEAT_DISEASE_CONFIGS = {
-    dengue: { stops: ['#7a3500', '#f59e0b', '#fde68a'], opacity: 0.75 },
-    chikungunya: { stops: ['#7c1060', '#ec4899', '#fce7f3'], opacity: 0.68 },
-    zika: { stops: ['#3b0764', '#8b5cf6', '#ede9fe'], opacity: 0.62 },
+    dengue:      { stops: ['#a07010', '#c89828', '#e8c060'], opacity: 0.65 },
+    chikungunya: { stops: ['#a03070', '#cc68a0', '#f0b8d8'], opacity: 0.60 },
+    zika:        { stops: ['#503090', '#8868c0', '#c8b8e8'], opacity: 0.55 },
 };
 
 // SVG heatmap overlay container
@@ -266,7 +266,7 @@ export function setMapHeatmap(allData) {
             fillColor: '#050c1f',
             fillOpacity: 0.75,
             weight: 1,
-            color: 'rgba(148,163,184,0.15)',
+            color: 'rgba(0,0,0,0.12)',
         });
     }
 
@@ -320,7 +320,7 @@ export function setMapHeatmap(allData) {
         const cfg = HEAT_DISEASE_CONFIGS[disease];
 
         const group = document.createElementNS(svgNS, 'g');
-        group.setAttribute('style', `mix-blend-mode: screen;`);
+        group.setAttribute('style', `mix-blend-mode: multiply;`);
         group.setAttribute('opacity', cfg.opacity);
 
         data.forEach(cap => {
@@ -402,12 +402,11 @@ export function setMapHeatmap(allData) {
  * Color for treatment coverage: blue=good, red=bad
  */
 function getTreatmentColor(percent) {
-    // Invert: higher treatment = cooler (blue/teal); lower = warmer (amber/red)
-    if (percent >= 70) return '#06b6d4'; // great
-    if (percent >= 55) return '#22d3ee';
-    if (percent >= 40) return '#a3e635'; // lime
-    if (percent >= 25) return '#f59e0b'; // amber
-    return '#ef4444';                   // poor
+    if (percent >= 70) return '#5ab0d8';
+    if (percent >= 55) return '#74c496';
+    if (percent >= 40) return '#a8c860';
+    if (percent >= 25) return '#c89828';
+    return '#c05858';
 }
 
 function clearEsgotoRelevoLayer() {
@@ -429,7 +428,7 @@ export function setMapEsgotoRelevo() {
             fillColor: '#0f172a',
             fillOpacity: 0.55,
             weight: 1.2,
-            color: 'rgba(148,163,184,0.25)',
+            color: 'rgba(0,0,0,0.15)',
         });
     }
 
@@ -683,7 +682,7 @@ export async function loadGeoJSON(capitalData = []) {
                     fillColor,
                     fillOpacity,
                     weight: 1.5,
-                    color: 'rgba(148, 163, 184, 0.3)',
+                    color: 'rgba(0, 0, 0, 0.18)',
                     dashArray: '',
                 };
             },
@@ -713,7 +712,7 @@ export async function loadGeoJSON(capitalData = []) {
                 if (sanitation) {
                     const highlightColeta = currentMapLayer === 'coletaEsgoto' ? 'color:var(--accent-primary);font-weight:600' : '';
                     const highlightTrat = currentMapLayer === 'tratamentoEsgoto' ? 'color:var(--accent-primary);font-weight:600' : '';
-                    popupHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.15)">`;
+                    popupHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.12)">`;
                     popupHTML += `<span class="popup-stat__label" style="display:block;margin-bottom:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="vertical-align:-2px;margin-right:4px"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0L12 2.69z"/></svg>Saneamento (SNIS)</span>`;
                     popupHTML += `<div class="popup-stats">`;
                     popupHTML += `<div class="popup-stat"><span class="popup-stat__label" style="${highlightColeta}">Coleta Esgoto</span><span class="popup-stat__value" style="${highlightColeta}">${sanitation.coletaEsgoto}%</span></div>`;
@@ -727,7 +726,7 @@ export async function loadGeoJSON(capitalData = []) {
                 layer.on('mouseover', function () {
                     // No hover highlight in heatmap or esgoto modes — would break the visualization
                     if (currentMapLayer === 'heatmap' || currentMapLayer === 'esgotoRelevo') return;
-                    this.setStyle({ weight: 2.5, color: '#38bdf8', fillOpacity: 0.75 });
+                    this.setStyle({ weight: 2, color: '#6baed6', fillOpacity: 0.72 });
                     this.bringToFront();
                 });
                 layer.on('mouseout', function () {

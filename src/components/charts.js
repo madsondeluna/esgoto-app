@@ -7,19 +7,21 @@ import { CHART_COLORS, getSanitationData, getDiseaseInfo } from '../services/api
 
 Chart.register(...registerables);
 
-// Global Chart.js defaults for dark mode
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.1)';
-Chart.defaults.font.family = "'Inter', sans-serif";
+// Global Chart.js defaults — light mode
+Chart.defaults.color = '#4b5563';
+Chart.defaults.borderColor = 'rgba(0, 0, 0, 0.07)';
+Chart.defaults.font.family = "'Ubuntu Mono', 'Courier New', monospace";
 Chart.defaults.font.size = 12;
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.legend.labels.padding = 16;
-Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(17, 24, 39, 0.95)';
-Chart.defaults.plugins.tooltip.titleFont = { weight: '600', size: 13, family: "'Inter', sans-serif" };
-Chart.defaults.plugins.tooltip.bodyFont = { size: 12, family: "'Inter', sans-serif" };
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255, 255, 255, 0.97)';
+Chart.defaults.plugins.tooltip.titleColor = '#1e1e2e';
+Chart.defaults.plugins.tooltip.bodyColor = '#4b5563';
+Chart.defaults.plugins.tooltip.titleFont = { weight: '700', size: 13, family: "'Ubuntu Mono', monospace" };
+Chart.defaults.plugins.tooltip.bodyFont = { size: 12, family: "'Ubuntu Mono', monospace" };
 Chart.defaults.plugins.tooltip.padding = 12;
 Chart.defaults.plugins.tooltip.cornerRadius = 8;
-Chart.defaults.plugins.tooltip.borderColor = 'rgba(148, 163, 184, 0.15)';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(0, 0, 0, 0.12)';
 Chart.defaults.plugins.tooltip.borderWidth = 1;
 Chart.defaults.animation = { duration: 600, easing: 'easeOutQuart' };
 
@@ -77,7 +79,6 @@ export function renderCorrelationChart(datasetsMap, disease = 'dengue', year = n
     canvas.classList.remove('hidden');
     if (emptyState) emptyState.classList.add('hidden');
 
-    const sanitationData = getSanitationData();
     const datasets = [];
     let colorIdx = 0;
 
@@ -118,11 +119,11 @@ export function renderCorrelationChart(datasetsMap, disease = 'dengue', year = n
             order: 3
         });
 
-        // 3. Add Climate (Lines) - secondary Y axis
+        // 3. Add Climate (Lines)
         datasets.push({
             label: `${locationName} - Umidade Média (%)`,
             data: umidArray,
-            borderColor: '#38bdf8', // Blue for humidity
+            borderColor: '#6baed6',
             backgroundColor: 'transparent',
             tension: 0.4,
             pointRadius: 2,
@@ -137,47 +138,16 @@ export function renderCorrelationChart(datasetsMap, disease = 'dengue', year = n
         datasets.push({
             label: `${locationName} - Temp. Média (°C)`,
             data: tempArray,
-            borderColor: '#f59e0b', // Amber for temp
+            borderColor: '#f97316',
             backgroundColor: 'transparent',
             tension: 0.4,
             pointRadius: 2,
             borderWidth: 2,
             type: 'line',
-            yAxisID: 'y1',
+            yAxisID: 'y2',
             spanGaps: true,
             order: 2
         });
-
-        // 4. Add Sanitation Reference Lines (Constant) - secondary Y axis
-        const parts = locationName.split(' - ');
-        if (parts.length > 1) {
-            const uf = parts[1].trim();
-            const san = sanitationData[uf];
-            if (san) {
-                datasets.push({
-                    label: `${locationName} - Coleta de Esgoto (%)`,
-                    data: new Array(12).fill(san.coletaEsgoto),
-                    borderColor: '#22c55e', // Green for collection
-                    borderWidth: 1.5,
-                    borderDash: [2, 2],
-                    pointRadius: 0,
-                    type: 'line',
-                    yAxisID: 'y1',
-                    order: 1
-                });
-                datasets.push({
-                    label: `${locationName} - Trat. Esgoto (%)`,
-                    data: new Array(12).fill(san.tratamentoEsgoto),
-                    borderColor: '#06b6d4', // Cyan for treatment
-                    borderWidth: 1.5,
-                    borderDash: [4, 4],
-                    pointRadius: 0,
-                    type: 'line',
-                    yAxisID: 'y1',
-                    order: 1
-                });
-            }
-        }
 
         colorIdx++;
     }
@@ -200,8 +170,9 @@ export function renderCorrelationChart(datasetsMap, disease = 'dengue', year = n
                         label: (ctx) => {
                             let label = ctx.dataset.label || '';
                             let value = ctx.parsed.y;
+                            if (value === null || value === undefined) return null;
                             if (label.includes('Casos')) return `${label}: ${Math.round(value).toLocaleString('pt-BR')}`;
-                            if (label.includes('Umidade') || label.includes('Esgoto')) return `${label}: ${value.toFixed(1)}%`;
+                            if (label.includes('Umidade')) return `${label}: ${value.toFixed(1)}%`;
                             if (label.includes('Temp')) return `${label}: ${value.toFixed(1)}°C`;
                             return `${label}: ${value}`;
                         }
@@ -225,17 +196,28 @@ export function renderCorrelationChart(datasetsMap, disease = 'dengue', year = n
                     display: true,
                     position: 'right',
                     grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'Valores Secundários (%, °C)', font: { size: 11, weight: '500' } },
+                    title: { display: true, text: 'Umidade Média (%)', font: { size: 11, weight: '500' } },
                     min: 0,
                     max: 100,
+                },
+                y2: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Temperatura (°C)', font: { size: 11, weight: '500' } },
+                    min: 0,
+                    max: 45,
+                    ticks: { callback: v => `${v}°C` },
+                    offset: true,
                 },
             },
         },
     });
 }
 
-// ===== Sanitation Correlation Chart (for info/special view) =====
-export function renderSanitationCorrelation(containerId, capitalData) {
+// ===== Sanitation Correlation Scatter (view Info) =====
+export function renderSanitationCorrelation(containerId, capitalData, disease = 'dengue') {
     const existing = Chart.getChart(containerId);
     if (existing) existing.destroy();
 
@@ -243,12 +225,24 @@ export function renderSanitationCorrelation(containerId, capitalData) {
     if (!canvas || !capitalData || capitalData.length === 0) return;
 
     const sanitationData = getSanitationData();
+    const info = getDiseaseInfo(disease);
 
-    // Build scatter data: X = sewage coverage %, Y = incidence
-    const scatterData = capitalData
+    // Scatter: X = coleta esgoto %, Y = incidência/100k
+    const scatterColeta = capitalData
         .filter(c => c.latest && sanitationData[c.uf])
         .map(c => ({
             x: sanitationData[c.uf].coletaEsgoto,
+            y: c.latest.p_inc100k || 0,
+            label: c.name,
+            uf: c.uf,
+            tratamento: sanitationData[c.uf].tratamentoEsgoto,
+        }));
+
+    // Second dataset: X = tratamento esgoto %, Y = incidência/100k
+    const scatterTratamento = capitalData
+        .filter(c => c.latest && sanitationData[c.uf])
+        .map(c => ({
+            x: sanitationData[c.uf].tratamentoEsgoto,
             y: c.latest.p_inc100k || 0,
             label: c.name,
             uf: c.uf,
@@ -258,38 +252,183 @@ export function renderSanitationCorrelation(containerId, capitalData) {
     new Chart(ctx, {
         type: 'scatter',
         data: {
-            datasets: [{
-                label: 'Capital (Coleta Esgoto % vs Incidência)',
-                data: scatterData,
-                backgroundColor: '#38bdf880',
-                borderColor: '#38bdf8',
-                borderWidth: 1.5,
-                pointRadius: 6,
-                pointHoverRadius: 9,
-            }],
+            datasets: [
+                {
+                    label: 'Coleta de Esgoto (%) vs Incidência',
+                    data: scatterColeta,
+                    backgroundColor: '#6baed680',
+                    borderColor: '#6baed6',
+                    borderWidth: 1.5,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                },
+                {
+                    label: 'Tratamento de Esgoto (%) vs Incidência',
+                    data: scatterTratamento,
+                    backgroundColor: info.colorHex + '80',
+                    borderColor: info.colorHex,
+                    borderWidth: 1.5,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointStyle: 'triangle',
+                },
+            ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: { position: 'top', align: 'start', labels: { boxWidth: 12, font: { size: 11 } } },
                 tooltip: {
                     callbacks: {
                         label: (ctx) => {
                             const d = ctx.raw;
-                            return `${d.label} (${d.uf}): Esgoto ${d.x}%, Inc ${d.y.toFixed(1)}/100k`;
+                            const metrica = ctx.dataset.label.includes('Coleta') ? 'Coleta' : 'Tratamento';
+                            return `${d.label} (${d.uf}): ${metrica} ${d.x}% · Inc ${d.y.toFixed(1)}/100k`;
                         },
                     },
                 },
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'Coleta de Esgoto (%)', font: { size: 12 } },
+                    title: { display: true, text: 'Cobertura de Esgoto (%)', font: { size: 12 } },
                     grid: { color: 'rgba(148, 163, 184, 0.08)' },
+                    min: 0,
+                    max: 100,
                 },
                 y: {
-                    title: { display: true, text: 'Incidência por 100k hab.', font: { size: 12 } },
+                    title: { display: true, text: `Incidência ${info.name}/100k hab.`, font: { size: 12 } },
                     grid: { color: 'rgba(148, 163, 184, 0.08)' },
+                    min: 0,
+                },
+            },
+        },
+    });
+}
+
+// ===== Sanitation vs Incidence Comparison (tracker view) =====
+// Shows coleta/tratamento % per selected location alongside incidência média
+export function renderSanitationComparison(canvasId, datasetsMap, disease = 'dengue') {
+    const existing = Chart.getChart(canvasId);
+    if (existing) existing.destroy();
+
+    const panel = document.getElementById('sanitation-chart-panel');
+    const canvas = document.getElementById(canvasId);
+
+    if (!canvas || !datasetsMap || datasetsMap.size === 0) {
+        if (panel) panel.classList.add('hidden');
+        return;
+    }
+
+    const sanitationData = getSanitationData();
+    const info = getDiseaseInfo(disease);
+
+    const labels = [];
+    const coletaData = [];
+    const tratamentoData = [];
+    const incidenciaData = [];
+
+    for (const [locationName, data] of datasetsMap) {
+        if (data.length === 0) continue;
+
+        // Name format: "CityName, UF"
+        const parts = locationName.split(', ');
+        const uf = parts.length > 1 ? parts[parts.length - 1].trim() : null;
+        const san = uf ? sanitationData[uf] : null;
+
+        const avgInc = data.length > 0
+            ? data.reduce((sum, d) => sum + (d.p_inc100k || 0), 0) / data.length
+            : 0;
+
+        labels.push(parts[0]); // city name only
+        coletaData.push(san ? san.coletaEsgoto : null);
+        tratamentoData.push(san ? san.tratamentoEsgoto : null);
+        incidenciaData.push(parseFloat(avgInc.toFixed(2)));
+    }
+
+    if (labels.length === 0) {
+        if (panel) panel.classList.add('hidden');
+        return;
+    }
+
+    if (panel) panel.classList.remove('hidden');
+
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Coleta de Esgoto (%)',
+                    data: coletaData,
+                    backgroundColor: '#6baed655',
+                    borderColor: '#6baed6',
+                    borderWidth: 1.5,
+                    borderRadius: 4,
+                    yAxisID: 'y',
+                    order: 2,
+                },
+                {
+                    label: 'Tratamento de Esgoto (%)',
+                    data: tratamentoData,
+                    backgroundColor: '#74c49655',
+                    borderColor: '#74c496',
+                    borderWidth: 1.5,
+                    borderRadius: 4,
+                    yAxisID: 'y',
+                    order: 2,
+                },
+                {
+                    label: `Incidência ${info.name}/100k (média)`,
+                    data: incidenciaData,
+                    type: 'line',
+                    borderColor: info.colorHex,
+                    backgroundColor: info.colorHex + '33',
+                    borderWidth: 2.5,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    tension: 0.3,
+                    yAxisID: 'y1',
+                    order: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', align: 'start', labels: { boxWidth: 12, font: { size: 11 } } },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const label = ctx.dataset.label || '';
+                            const val = ctx.parsed.y;
+                            if (val === null || val === undefined) return `${label}: sem dados`;
+                            if (label.includes('Esgoto')) return `${label}: ${val.toFixed(1)}%`;
+                            return `${label}: ${val.toFixed(1)}/100k`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    min: 0,
+                    max: 100,
+                    title: { display: true, text: 'Cobertura de Esgoto (%)', font: { size: 11, weight: '500' } },
+                    grid: { color: 'rgba(148,163,184,0.08)' },
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Incidência/100k hab.', font: { size: 11, weight: '500' } },
+                    min: 0,
+                    ticks: { callback: v => v.toFixed(0) },
                 },
             },
         },

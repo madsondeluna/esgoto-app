@@ -282,31 +282,31 @@ export function getRegionForUF(ufAbbr) {
 // ===== Alert Level helpers =====
 export function getAlertLevel(nivel) {
     const levels = {
-        1: { label: 'Verde', color: 'var(--alert-green)', bg: 'rgba(34, 197, 94, 0.15)', class: 'badge--green' },
-        2: { label: 'Atenção', color: 'var(--alert-yellow)', bg: 'rgba(234, 179, 8, 0.15)', class: 'badge--yellow' },
-        3: { label: 'Alerta', color: 'var(--alert-orange)', bg: 'rgba(249, 115, 22, 0.15)', class: 'badge--orange' },
-        4: { label: 'Emergência', color: 'var(--alert-red)', bg: 'rgba(239, 68, 68, 0.15)', class: 'badge--red' },
+        1: { label: 'Verde', color: 'var(--alert-green)', bg: 'rgba(79, 168, 128, 0.12)', class: 'badge--green' },
+        2: { label: 'Atenção', color: 'var(--alert-yellow)', bg: 'rgba(192, 144, 48, 0.12)', class: 'badge--yellow' },
+        3: { label: 'Alerta', color: 'var(--alert-orange)', bg: 'rgba(204, 112, 64, 0.12)', class: 'badge--orange' },
+        4: { label: 'Emergência', color: 'var(--alert-red)', bg: 'rgba(192, 88, 88, 0.12)', class: 'badge--red' },
     };
     return levels[nivel] || levels[1];
 }
 
 export function getAlertColorHex(nivel) {
-    const colors = { 1: '#22c55e', 2: '#eab308', 3: '#f97316', 4: '#ef4444' };
+    const colors = { 1: '#4fa880', 2: '#c09030', 3: '#cc7040', 4: '#c05858' };
     return colors[nivel] || colors[1];
 }
 
 // ===== Disease display info =====
 export function getDiseaseInfo(disease) {
     const info = {
-        dengue: { name: 'Dengue', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>', color: 'var(--color-dengue)', colorHex: '#f59e0b' },
-        chikungunya: { name: 'Chikungunya', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/><path d="M12 7V2M12 22v-5M17 12h5M2 12h5"/></svg>', color: 'var(--color-chikungunya)', colorHex: '#ec4899' },
-        zika: { name: 'Zika', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', color: 'var(--color-zika)', colorHex: '#8b5cf6' },
+        dengue: { name: 'Dengue', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>', color: 'var(--color-dengue)', colorHex: '#c89828' },
+        chikungunya: { name: 'Chikungunya', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/><path d="M12 7V2M12 22v-5M17 12h5M2 12h5"/></svg>', color: 'var(--color-chikungunya)', colorHex: '#cc68a0' },
+        zika: { name: 'Zika', icon: '<svg class="disease-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', color: 'var(--color-zika)', colorHex: '#8868c0' },
     };
     return info[disease] || info.dengue;
 }
 
-// Chart colors for multiple series
+// Chart colors for multiple series — pastel palette
 export const CHART_COLORS = [
-    '#38bdf8', '#f59e0b', '#34d399', '#ec4899', '#a78bfa',
-    '#fb923c', '#22d3ee', '#f472b6', '#4ade80', '#c084fc'
+    '#6baed6', '#c89828', '#74c496', '#cc68a0', '#8868c0',
+    '#cc7040', '#5ec4d4', '#e8a8c0', '#78c8a0', '#b0a0d8'
 ];

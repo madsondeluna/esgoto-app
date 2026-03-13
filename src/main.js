@@ -4,7 +4,7 @@
  */
 import { fetchNationalOverview, fetchDiseaseData, getSanitationData, getDiseaseInfo, CHART_COLORS } from './services/api.js';
 import { initMap, loadGeoJSON, fitRegion, updateMapColors, setMapDisease, setMapLayer, setMapHeatmap, setMapEsgotoRelevo } from './components/map.js';
-import { renderCorrelationChart, renderSanitationCorrelation } from './components/charts.js';
+import { renderCorrelationChart, renderSanitationCorrelation, renderSanitationComparison } from './components/charts.js';
 import { initCards, renderCards, updateNationalSummary, setActiveDisease } from './components/cards.js';
 import { initRegionFilters, initTrackerSelectors, initPeriodControls, getPeriod, initSearch, initPathogenTags, initChartToggle } from './components/filters.js';
 
@@ -35,11 +35,19 @@ function switchView(viewId) {
     // Trigger map resize if switching to map
     if (viewId === 'map') {
         setTimeout(() => {
-            const map = import('./components/map.js').then(m => {
+            import('./components/map.js').then(m => {
                 const mapInstance = m.getMap();
                 if (mapInstance) mapInstance.invalidateSize();
             });
         }, 100);
+    }
+
+    // Refresh sanitation scatter when switching to info view
+    if (viewId === 'info') {
+        const data = state.nationalData[state.currentDisease];
+        if (data && data.length > 0) {
+            renderSanitationCorrelation('sanitation-correlation', data, state.currentDisease);
+        }
     }
 }
 
@@ -101,9 +109,9 @@ async function loadNationalData(disease = 'dengue') {
             lastUpdateEl.textContent = `Atualizado: ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        // Render sanitation correlation if the canvas exists
-        if (document.getElementById('sanitation-correlation')) {
-            renderSanitationCorrelation('sanitation-correlation', data);
+        // Render sanitation correlation if the Info view is active
+        if (state.currentView === 'info' && document.getElementById('sanitation-correlation')) {
+            renderSanitationCorrelation('sanitation-correlation', data, disease);
         }
 
     } catch (err) {
@@ -193,6 +201,7 @@ function updateChartTitle() {
 // ===== Update Tracker Charts =====
 function updateTrackerCharts() {
     renderCorrelationChart(state.trackerDatasets, state.currentDisease, new Date().getFullYear());
+    renderSanitationComparison('sanitation-chart', state.trackerDatasets, state.currentDisease);
 }
 
 // ===== Reload Tracker Data (on disease or period change) =====
