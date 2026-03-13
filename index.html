@@ -73,15 +73,25 @@
                     <div id="national-summary" class="national-summary">
                         <div class="summary-stat">
                             <span class="summary-stat__value" id="total-cases">--</span>
-                            <span class="summary-stat__label">Casos totais (2025)</span>
+                            <span class="summary-stat__label">Casos totais (ano corrente)</span>
                         </div>
                         <div class="summary-stat">
                             <span class="summary-stat__value" id="total-cities">--</span>
-                            <span class="summary-stat__label">Municípios em alerta</span>
+                            <span class="summary-stat__label">Capitais em alerta (≥ nível 3)</span>
                         </div>
                         <div class="summary-stat">
                             <span class="summary-stat__value" id="avg-rt">--</span>
                             <span class="summary-stat__label">Rt médio nacional</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-stat__value" id="max-inc">--</span>
+                            <span class="summary-stat__label" id="max-inc-label">Maior incidência/100k</span>
+                        </div>
+                        <div id="alert-distribution" style="display:none;grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding-top:4px;font-size:0.68rem;font-weight:600;">
+                            <span id="alert-n1" style="color:#4fa880;"></span>
+                            <span id="alert-n2" style="color:#c09030;"></span>
+                            <span id="alert-n3" style="color:#cc7040;"></span>
+                            <span id="alert-n4" style="color:#c05858;"></span>
                         </div>
                     </div>
                 </div>
@@ -107,6 +117,11 @@
                         <button class="layer-btn" data-layer="coletaEsgoto">Coleta de Esgoto</button>
                         <button class="layer-btn" data-layer="tratamentoEsgoto">Trat. de Esgoto</button>
                     </div>
+                </div>
+
+                <div class="sidebar__section" id="hotspots-section" style="display:none;">
+                    <h3 class="sidebar__section-title">Maiores Incidências <span id="hotspots-disease-label" style="color:var(--text-tertiary);font-weight:400;"></span></h3>
+                    <div id="hotspots-list"></div>
                 </div>
 
                 <div class="sidebar__section">
@@ -255,6 +270,21 @@
                         <canvas id="main-chart" class="hidden"></canvas>
                     </div>
 
+                    <!-- Rt Chart: Número de Reprodução Semanal -->
+                    <div class="chart-panel hidden" id="rt-chart-panel" style="margin-top: 12px;">
+                        <div style="padding: 14px 16px 6px; border-bottom: 1px solid rgba(148,163,184,0.1);">
+                            <h3 style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin: 0 0 2px;">
+                                Número de Reprodução — Rt Semanal
+                            </h3>
+                            <p style="font-size: 0.72rem; color: var(--text-tertiary); margin: 0;">
+                                Rt &gt; 1 = epidemia em crescimento &nbsp;·&nbsp; Rt &lt; 1 = epidemia controlada. Limiar crítico em vermelho tracejado.
+                            </p>
+                        </div>
+                        <div style="height: 200px; position: relative; padding: 8px;">
+                            <canvas id="rt-chart"></canvas>
+                        </div>
+                    </div>
+
                     <!-- Sanitation Chart: Saneamento × Incidência -->
                     <div class="chart-panel hidden" id="sanitation-chart-panel" style="margin-top: 12px;">
                         <div style="padding: 14px 16px 6px; border-bottom: 1px solid rgba(148,163,184,0.1);">
@@ -343,6 +373,45 @@
                         <p style="margin-top:8px;font-size:0.75rem;color:var(--text-tertiary)">Fonte: SNIS/SINISA 2023 ·
                             Atlas Esgotos (ANA)</p>
                     </div>
+                    <div class="info-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(107,174,214,0.06) 0%, rgba(116,196,150,0.06) 100%); border: 1px solid rgba(107,174,214,0.2);">
+                        <h3><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5" width="20" height="20">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg> Contexto Acadêmico — TCC MBA Engenharia de Software (USP/Esalq)</h3>
+                        <p style="margin-bottom: 12px;">Este dashboard foi desenvolvido como <strong>Trabalho de Conclusão de Curso</strong> do MBA em Engenharia de Software da Universidade de São Paulo (USP/Esalq), com o objetivo de demonstrar a aplicação prática de engenharia de software no desenvolvimento de ferramentas de saúde pública digital.</p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;">
+                            <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;">
+                                <div style="font-size:0.72rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Indicadores Epidemiológicos</div>
+                                <ul style="font-size:0.78rem;color:var(--text-secondary);line-height:1.7;list-style:none;padding:0;">
+                                    <li>📊 Casos notificados e estimados por SE</li>
+                                    <li>📈 Número de reprodução efetivo (Rt)</li>
+                                    <li>🗺️ Incidência por 100 mil habitantes</li>
+                                    <li>🌡️ Correlação temperatura/umidade</li>
+                                    <li>🚰 Cobertura de saneamento básico</li>
+                                </ul>
+                            </div>
+                            <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;">
+                                <div style="font-size:0.72rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Arquitetura de Software</div>
+                                <ul style="font-size:0.78rem;color:var(--text-secondary);line-height:1.7;list-style:none;padding:0;">
+                                    <li>⚡ Vite + Vanilla JS (ES Modules)</li>
+                                    <li>📉 Chart.js 4.x + Leaflet.js</li>
+                                    <li>🔌 Express.js (API proxy)</li>
+                                    <li>☁️ Deploy: Render Web Service</li>
+                                    <li>🗂️ APIs: InfoDengue · IBGE · SNIS</li>
+                                </ul>
+                            </div>
+                            <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;">
+                                <div style="font-size:0.72rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Referências Científicas</div>
+                                <ul style="font-size:0.78rem;color:var(--text-secondary);line-height:1.7;list-style:none;padding:0;">
+                                    <li>🔬 Fiocruz — InfoDengue (Câmara et al.)</li>
+                                    <li>🏛️ IBGE — Malhas e Localidades</li>
+                                    <li>💧 SNIS/ANA — Atlas Esgotos 2023</li>
+                                    <li>📐 Modelo Rt: EpiEstim adaptado</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="info-card" style="grid-column: 1 / -1;">
                         <h3><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="1.5" width="20" height="20">

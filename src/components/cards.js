@@ -103,6 +103,9 @@ export function updateNationalSummary(nationalData) {
     const totalCasesEl = document.getElementById('total-cases');
     const totalCitiesEl = document.getElementById('total-cities');
     const avgRtEl = document.getElementById('avg-rt');
+    const maxIncEl = document.getElementById('max-inc');
+    const maxIncLabelEl = document.getElementById('max-inc-label');
+    const distEl = document.getElementById('alert-distribution');
 
     if (!nationalData || nationalData.length === 0) return;
 
@@ -110,15 +113,24 @@ export function updateNationalSummary(nationalData) {
     let alertCities = 0;
     let avgRt = 0;
     let rtCount = 0;
+    let maxInc = 0;
+    let maxIncCity = '';
+    let level1 = 0, level2 = 0, level3 = 0, level4 = 0;
 
     nationalData.forEach(cap => {
         if (cap.latest) {
             totalCases += cap.latest.notif_accum_year || 0;
             if (cap.latest.nivel >= 3) alertCities++;
-            if (cap.latest.Rt) {
-                avgRt += cap.latest.Rt;
-                rtCount++;
-            }
+            if (cap.latest.Rt) { avgRt += cap.latest.Rt; rtCount++; }
+
+            const nivel = cap.latest.nivel || 1;
+            if (nivel === 1) level1++;
+            else if (nivel === 2) level2++;
+            else if (nivel === 3) level3++;
+            else if (nivel === 4) level4++;
+
+            const inc = cap.latest.p_inc100k || 0;
+            if (inc > maxInc) { maxInc = inc; maxIncCity = cap.name; }
         }
     });
 
@@ -127,4 +139,17 @@ export function updateNationalSummary(nationalData) {
     if (totalCasesEl) totalCasesEl.textContent = totalCases.toLocaleString('pt-BR');
     if (totalCitiesEl) totalCitiesEl.textContent = alertCities;
     if (avgRtEl) avgRtEl.textContent = avgRt.toFixed(2);
+    if (maxIncEl) maxIncEl.textContent = maxInc > 0 ? maxInc.toFixed(1) : '--';
+    if (maxIncLabelEl && maxIncCity) maxIncLabelEl.textContent = `Maior incidência/100k (${maxIncCity})`;
+
+    // Alert level distribution
+    const n1El = document.getElementById('alert-n1');
+    const n2El = document.getElementById('alert-n2');
+    const n3El = document.getElementById('alert-n3');
+    const n4El = document.getElementById('alert-n4');
+    if (n1El) n1El.textContent = `● ${level1} verde`;
+    if (n2El) n2El.textContent = `● ${level2} atenção`;
+    if (n3El) n3El.textContent = `● ${level3} alerta`;
+    if (n4El) n4El.textContent = `● ${level4} emergência`;
+    if (distEl) distEl.style.display = 'flex';
 }

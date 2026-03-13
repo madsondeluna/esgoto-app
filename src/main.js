@@ -2,9 +2,9 @@
  * VigiSaúde Brasil — Main Entry Point
  * Orchestrates all components and views
  */
-import { fetchNationalOverview, fetchDiseaseData, getSanitationData, getDiseaseInfo, CHART_COLORS } from './services/api.js';
+import { fetchNationalOverview, fetchDiseaseData, getSanitationData, getDiseaseInfo, CHART_COLORS, getAlertColorHex } from './services/api.js';
 import { initMap, loadGeoJSON, fitRegion, updateMapColors, setMapDisease, setMapLayer } from './components/map.js';
-import { renderCorrelationChart, renderSanitationCorrelation, renderSanitationComparison } from './components/charts.js';
+import { renderCorrelationChart, renderSanitationCorrelation, renderSanitationComparison, renderRtChart } from './components/charts.js';
 import { initCards, renderCards, updateNationalSummary, setActiveDisease } from './components/cards.js';
 import { initRegionFilters, initTrackerSelectors, initPeriodControls, getPeriod, initSearch, initPathogenTags, initChartToggle } from './components/filters.js';
 
@@ -89,6 +89,7 @@ async function loadNationalData(disease = 'dengue') {
 
         // Update national summary (active disease)
         updateNationalSummary(data);
+        renderHotspots(data, disease);
 
         await loadGeoJSON(data);
 
@@ -191,7 +192,49 @@ function updateChartTitle() {
 // ===== Update Tracker Charts =====
 function updateTrackerCharts() {
     renderCorrelationChart(state.trackerDatasets, state.currentDisease, new Date().getFullYear());
+    renderRtChart(state.trackerDatasets, state.currentDisease);
     renderSanitationComparison('sanitation-chart', state.trackerDatasets, state.currentDisease);
+}
+
+// ===== Render Top Hotspots in Map Sidebar =====
+function renderHotspots(data, disease) {
+    const section = document.getElementById('hotspots-section');
+    const list = document.getElementById('hotspots-list');
+    const label = document.getElementById('hotspots-disease-label');
+
+    if (!section || !list || !data || data.length === 0) return;
+
+    const info = getDiseaseInfo(disease || state.currentDisease);
+    if (label) label.textContent = `(${info.name.toLowerCase()})`;
+
+    const sorted = data
+        .filter(c => c.latest && c.latest.p_inc100k > 0)
+        .sort((a, b) => (b.latest.p_inc100k || 0) - (a.latest.p_inc100k || 0))
+        .slice(0, 5);
+
+    if (sorted.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = '';
+
+    const maxInc = sorted[0].latest.p_inc100k;
+    list.innerHTML = sorted.map((cap, idx) => {
+        const inc = cap.latest.p_inc100k || 0;
+        const pct = maxInc > 0 ? (inc / maxInc) * 100 : 0;
+        const alertColor = getAlertColorHex(cap.latest.nivel || 1);
+        return `
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(148,163,184,0.08);">
+                <span style="font-size:0.65rem;font-weight:700;color:var(--text-tertiary);width:14px;text-align:right;">${idx + 1}</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;">
+                        <span style="font-size:0.75rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cap.name}</span>
+                        <span style="font-size:0.7rem;color:${alertColor};font-weight:700;margin-left:4px;white-space:nowrap;">${inc.toFixed(1)}/100k</span>
+                    </div>
+                    <div style="height:3px;background:var(--surface-1);border-radius:2px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${alertColor};border-radius:2px;transition:width 0.4s;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // ===== Reload Tracker Data (on disease or period change) =====

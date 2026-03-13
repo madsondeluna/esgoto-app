@@ -297,6 +297,127 @@ export function renderSanitationCorrelation(containerId, capitalData, disease = 
     });
 }
 
+// ===== Rt Over Time Chart (tracker view) =====
+export function renderRtChart(datasetsMap, disease = 'dengue') {
+    const canvas = document.getElementById('rt-chart');
+    if (!canvas) return;
+
+    const existing = Chart.getChart('rt-chart');
+    if (existing) existing.destroy();
+
+    const panel = document.getElementById('rt-chart-panel');
+
+    if (!datasetsMap || datasetsMap.size === 0) {
+        if (panel) panel.classList.add('hidden');
+        return;
+    }
+
+    // Hide panel if no Rt data available
+    let hasAnyRt = false;
+    for (const [, data] of datasetsMap) {
+        if (data.some(d => d.Rt > 0)) { hasAnyRt = true; break; }
+    }
+    if (!hasAnyRt) {
+        if (panel) panel.classList.add('hidden');
+        return;
+    }
+    if (panel) panel.classList.remove('hidden');
+
+    // Collect all unique SE values across all locations
+    const allSEs = new Set();
+    for (const [, data] of datasetsMap) {
+        data.forEach(d => allSEs.add(d.SE));
+    }
+    const seArray = [...allSEs].sort((a, b) => a - b);
+    const labels = seArray.map(se => formatSEShort(se));
+
+    const datasets = [];
+
+    // Dashed reference line at Rt = 1
+    datasets.push({
+        label: 'Limiar Rt = 1',
+        data: seArray.map(() => 1),
+        borderColor: 'rgba(192, 88, 88, 0.55)',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        type: 'line',
+        yAxisID: 'y',
+        order: 99,
+        spanGaps: true,
+    });
+
+    let colorIdx = 0;
+    for (const [locationName, data] of datasetsMap) {
+        if (data.length === 0) continue;
+        const color = CHART_COLORS[colorIdx % CHART_COLORS.length];
+        const seToRt = new Map(data.map(d => [d.SE, d.Rt]));
+        const rtData = seArray.map(se => {
+            const rt = seToRt.get(se);
+            return (rt !== null && rt !== undefined && rt > 0) ? parseFloat(rt.toFixed(3)) : null;
+        });
+
+        datasets.push({
+            label: `${locationName} — Rt`,
+            data: rtData,
+            borderColor: color,
+            backgroundColor: color + '18',
+            tension: 0.35,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            borderWidth: 2,
+            fill: false,
+            type: 'line',
+            yAxisID: 'y',
+            spanGaps: true,
+            order: colorIdx + 1,
+        });
+        colorIdx++;
+    }
+
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', align: 'start', labels: { boxWidth: 12, font: { size: 11 } } },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const label = ctx.dataset.label || '';
+                            const value = ctx.parsed.y;
+                            if (value === null || value === undefined) return null;
+                            if (label.includes('Limiar')) return null;
+                            const trend = value > 1 ? '↑ crescimento' : '↓ controle';
+                            return `${label}: ${value.toFixed(2)} (${trend})`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 13, font: { size: 10 } },
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    min: 0,
+                    suggestedMax: 2.5,
+                    grid: { color: 'rgba(148, 163, 184, 0.08)' },
+                    title: { display: true, text: 'Número de Reprodução (Rt)', font: { size: 11, weight: '500' } },
+                    ticks: { callback: v => v.toFixed(1) },
+                },
+            },
+        },
+    });
+}
+
 // ===== Sanitation vs Incidence Comparison (tracker view) =====
 // Shows coleta/tratamento % per selected location alongside incidência média
 export function renderSanitationComparison(canvasId, datasetsMap, disease = 'dengue') {
